@@ -14,7 +14,7 @@ const int height = 800;
 void line(int x0, int y0, int x1, int y1, TGAImage& image, TGAColor colour) {
     bool steep = false;
 
-    if (abs(x0 - x1 < abs(y0 - y1))) {
+    if (abs(x0 - x1) < abs(y0 - y1)) {
         std::swap(x0, y0);
             std::swap(x1, y1);
             steep = true;
@@ -32,7 +32,7 @@ void line(int x0, int y0, int x1, int y1, TGAImage& image, TGAColor colour) {
 
 
             for (int x = x0; x <= x1; x++) {
-                int t = (x - x0) / (x1 - x0);
+                float t = float(x - x0) / (x1 - x0);
                 int y = y0 * (1 - t) + y1 * t;
                 // if the image is transposed, de transpose it
                 if (steep) {
@@ -53,7 +53,30 @@ int main(int argc, char** argv) {
     
     TGAImage image(width, height, TGAImage::RGB);
 
-    line(0, 0, width, height, image, red);
+    //line(0, 0, width, height, image, red);
+
+    Model* model;
+    
+    if (2 == argc) {
+        model = new Model(argv[1]);
+    }
+    else {
+        model = new Model("../cc.obj");
+    }
+
+    for (int i = 0; i < model->nfaces(); i++) {
+        std::vector<int> face = model->face(i);
+        for (int j = 0; j < 3; j++) {
+            Vec3f v0 = model->vert(face[j]);
+            Vec3f v1 = model->vert(face[(j + 1) % 3]);
+            int x0 = (v0.x + 1.) * width / 2.;
+            int y0 = (v0.y + 1.) * height / 2.;
+            int x1 = (v1.x + 1.) * width / 2.;
+            int y1 = (v1.y + 1.) * height / 2.;
+            line(x0, y0, x1, y1, image, white);
+        }
+    }
+
 
     image.flip_vertically(); // we want to have the origin at the left bottom corner of the image
     image.write_tga_file("output.tga");
